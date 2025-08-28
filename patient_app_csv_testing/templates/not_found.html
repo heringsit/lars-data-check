@@ -1,0 +1,9 @@
+
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2 class="section-title">찾을 수 없습니다</h2>
+  <p class="muted">{{ message }}</p>
+  <p><a class="btn" href="{{ url_for('patient_list') }}">← 목록으로</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+﻿테이블명,영문컬럼명,dCode,decode_text
+user,stage,CS100,1기
+user,stage,CS101,2기
+user,stage,CS102,3기
+user,stage,CS103,4기
+user,anticancerTreatmentYN,TY100,치료 중
+user,anticancerTreatmentYN,TY101,치료 종료
+user,anticancerTreatmentYN,TY102,치료 안함
+user,anticancerTreatmentYN,TY103,치료예정
+user,cancerType,CT101,직장암

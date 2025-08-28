@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  /* === OVERRIDES to give you a wider working area === */
+  /* Many base templates center content with a narrow max-width.
+     These overrides expand that central column so your 3 cards aren't squished. */
+  main, .container, .content, .page, .wrap {
+    max-width: 80% !important;  /* Adjust if you want even wider */
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Make the main top card span full width nicely */
+  section.card {
+    width: 100%;
+  }
+
+  /* === LAYOUT GRIDS === */
+  /* Three-up metrics grid that grows BIG on wide screens and wraps gracefully */
+  .grid.three {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); /* wider min to avoid squish */
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Two-up grid for the info blocks */
+  .grid.two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* Subcards inside the big '환자상세정보' card */
+  .subcard {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px;
+    background: #fff;
+  }
+
+  /* Charts fill card width; height tuned for readability */
+  .card canvas, .subcard canvas {
+    width: 100% !important;
+    height: 260px !important;
+  }
+
+  /* Tables: allow horizontal scroll on small screens so columns don't crush */
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  /* Slightly larger section titles for better visual balance in wide layout */
+  .section-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+</style>
+
+<header class="page-actions" style="margin-top:20px; display:flex; justify-content:flex-start;">
+  <a href="{{ back_url }}"
+     class="btn"
+     style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">
+    ← 목록으로
+  </a>
+</header>
+
+<h2>환자상세정보</h2>
+
+<!-- Keep everything inside ONE big card so the '환자상세정보' title visually covers the grids below -->
+<section class="card" style="margin-bottom:24px;">
+  <h2 class="section-title">환자 상세정보</h2>
+
+  <!-- Top info blocks -->
+  <div class="grid two" style="margin-top:12px; row-gap:12px;">
+    <div class="subcard">
+      <h4 style="margin:0 0 8px 0; font-weight:700;">기본 정보</h4>
+      <dl class="kv">
+        <dt>이름</dt><dd>{{ patient.name }}</dd>
+        <dt>소속병원</dt><dd>{{ patient.hospital }}</dd>
+        <dt>연락처</dt><dd>{{ patient.phone }}</dd>
+        <dt>연구등록번호</dt><dd>{{ patient.research_id }}</dd>
+        <dt>등록일</dt><dd>{{ patient.registered_on }}</dd>
+        <dt>나이/성별</dt><dd>{{ patient.age }} / {{ patient.sex }}</dd>
+        <dt>상태</dt>
+        <dd><span class="badge {{ 'ok' if patient.status=='활성' else 'muted' }}">{{ patient.status }}</span></dd>
+      </dl>
+    </div>
+
+    <div class="subcard">
+      <h4 style="margin:0 0 8px 0; font-weight:700;">신체 정보</h4>
+      <dl class="kv">
+        <dt>키</dt><dd>{{ patient.height_cm }} cm</dd>
+        <dt>체중</dt><dd>{{ patient.weight_kg }} kg</dd>
+        <dt>BMI</dt><dd>{{ patient.bmi }}</dd>
+      </dl>
+    </div>
+
+    <div class="subcard">
+      <h4 style="margin:0 0 8px 0; font-weight:700;">질병 정보</h4>
+      <dl class="kv">
+        <dt>종양</dt><dd>{{ patient.tumor }}</dd>
+        <dt>조직형</dt><dd>{{ patient.histology }}</dd>
+        <dt>병기</dt><dd>{{ patient.stage }}</dd>
+        <dt>병변의 위치</dt><dd>{{ patient.lesion }}</dd>
+      </dl>
+    </div>
+
+    <div class="subcard">
+      <h4 style="margin:0 0 8px 0; font-weight:700;">치료 정보</h4>
+      <dl class="kv">
+        <dt>수술 날짜</dt><dd>{{ patient.surgery_date }}</dd>
+        <dt>수술명</dt><dd>{{ patient.surgery_name }}</dd>
+        <dt>항암치료</dt><dd>{{ patient.treat_status }}</dd>
+        <dt>종양반응등급</dt><dd>{{ patient.response }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <hr style="border:none; border-top:1px solid #eee; margin:16px 0;" />
+
+  <!-- LARS / EQ-5D / Exercise responsive row -->
+  <div class="grid three">
+    <!-- LARS -->
+    <section class="subcard">
+      <h3 class="section-title">LARS 점수 추세</h3>
+      <canvas id="chart-lars"></canvas>
+      <div class="table-wrap" style="margin-top:12px">
+        <table class="table">
+          <thead>
+            <tr><th>설문명</th><th>날짜</th><th>점수</th><th>상태</th></tr>
+          </thead>
+          <tbody>
+            {% for r in lars_rows %}
+            <tr>
+              <td><a href="{{ url_for('survey_detail', survey_id=r.id) }}">{{ r.title }}</a></td>
+              <td>{{ r.date }}</td>
+              <td>{{ r.score_display }}</td>
+              <td><span class="badge {{ 'ok' if r.status_display=='완료' else 'muted' }}">{{ r.status_display }}</span></td>
+            </tr>
+            {% else %}
+              <tr><td colspan="4" class="muted">LARS 설문 데이터가 없습니다.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EQ-5D -->
+    <section class="subcard">
+      <h3 class="section-title">EQ-5D 점수 추세</h3>
+      <canvas id="chart-eq"></canvas>
+      <div class="table-wrap" style="margin-top:12px">
+        <table class="table">
+          <thead>
+            <tr><th>설문명</th><th>날짜</th><th>점수</th><th>상태</th></tr>
+          </thead>
+          <tbody>
+            {% for r in eq_rows %}
+            <tr>
+              <td><a href="{{ url_for('survey_detail', survey_id=r.id) }}">{{ r.title }}</a></td>
+              <td>{{ r.date }}</td>
+              <td>{{ r.score_display }}</td>
+              <td><span class="badge {{ 'ok' if r.status_display=='완료' else 'muted' }}">{{ r.status_display }}</span></td>
+            </tr>
+            {% else %}
+              <tr><td colspan="4" class="muted">EQ-5D 설문 데이터가 없습니다.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Exercise -->
+    <section class="subcard">
+      <h3 class="section-title" style="margin:0">운동 달성률</h3>
+      <div style="margin:12px 0;">
+        <canvas id="exChart"></canvas>
+      </div>
+      <div class="table-wrap">
+        <table class="table" style="width:100%;">
+          <thead>
+            <tr>
+              <th style="width:140px;">날짜</th>
+              <th style="width:120px;">달성률</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if ex_rows and ex_rows|length > 0 %}
+              {% for r in ex_rows %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('exercise_detail', header_id=r.id) }}"
+                     style="text-decoration:none; font-weight:600;">
+                    {{ r.date }}
+                  </a>
+                </td>
+                <td>{{ r.ratio_display }}</td>
+                <td>
+                  <span class="badge 
+                   {% if r.status=='완료' %}ok
+                  {% elif r.status=='진행중' %}warn
+                  {% else %}muted{% endif %}">
+                  {{ r.status }}
+                  </span>
+                  </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" style="text-align:center; color:#777;">운동 기록이 없습니다</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Use bracket-notation to avoid colliding with dict built-ins like .values()
+  const larsLabels = {{ (lars_chart['labels'] if lars_chart else []) | tojson }};
+  const larsValues = {{ (lars_chart['values'] if lars_chart else []) | tojson }};
+  const eqLabels   = {{ (eq_chart['labels']   if eq_chart   else []) | tojson }};
+  const eqValues   = {{ (eq_chart['values']   if eq_chart   else []) | tojson }};
+  const exLabels   = {{ (ex_chart['labels']   if ex_chart   else []) | tojson }};
+  const exValues   = {{ (ex_chart['values']   if ex_chart   else []) | tojson }};
+
+  new Chart(document.getElementById("chart-lars"), {
+    type: "line",
+    data: { labels: larsLabels, datasets: [{ label: "LARS", data: larsValues, tension: 0.3, spanGaps: true }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+          x: {
+            ticks: {
+              autoSkip: false,    // show all labels
+              maxRotation: 45,    // tilt labels if crowded
+              minRotation: 0
+            }
+          },
+          y: { beginAtZero: true }
+        },
+      plugins: { legend: { display: true } }
+    }
+  });
+
+  new Chart(document.getElementById("chart-eq"), {
+    type: "line",
+    data: { labels: eqLabels, datasets: [{ label: "EQ-5D", data: eqValues, tension: 0.3, spanGaps: true }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: {
+            autoSkip: false,    // show all labels
+            maxRotation: 45,    // tilt labels if crowded
+            minRotation: 0
+          }
+        },
+        y: { beginAtZero: true }
+      },
+      plugins: { legend: { display: true } }
+    }
+  });
+
+  const exCtx = document.getElementById('exChart');
+  if (exCtx) {
+    new Chart(exCtx, {
+      type: 'line',
+      data: { labels: exLabels, datasets: [{ label: '운동 달성률(%)', data: exValues, tension: 0.3, spanGaps: true }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: {
+              autoSkip: false,    // show all labels
+              maxRotation: 45,    // tilt labels if crowded
+              minRotation: 0
+            }
+          },
+          y: { beginAtZero: true }
+        },
+      }
+    });
+  }
+</script>
+
+<footer class="page-actions" style="margin-top:20px; display:flex; justify-content:flex-start;">
+  <a href="{{ back_url }}"
+     class="btn"
+     style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">
+    ← 목록으로
+  </a>
+</footer>
+{% endblock %}

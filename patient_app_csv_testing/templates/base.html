@@ -1,0 +1,36 @@
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title if title else "대상자 관리" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="container header-bar">
+        <div class="title-wrap">
+          <!-- Logo next to title -->
+          <img src="{{ url_for('static', filename='images/lars-care-logo.png') }}"
+               alt="LARS Care"
+               class="title-mark">
+          <h1 class="app-title">{{ header if header else "대상자 관리" }}</h1>
+        </div>
+    
+        {% if session.get('admin_email') %}
+        <!-- Keep as <a> if your /logout is GET; if you switch to POST, use a <form> -->
+        <a href="{{ url_for('logout') }}" class="btn btn-logout">⎋ 로그아웃</a>
+        {% endif %}
+      </div>
+    </header>
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="app-footer">
+      <div class="container">
+        <small>Copyright © 2025 HERINGS. All rights reserved.</small>
+      </div>
+    </footer>
+  </body>
+</html>

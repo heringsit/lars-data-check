@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+
+<header class="page-actions" style="margin-top:20px; display:flex; justify-content:flex-start;">
+  <a href="{{ back_url }}"
+     class="btn"
+     style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">
+    ← 환자 상세로
+  </a>
+</header>
+
+<h2>설문 상세</h2>
+
+<section class="card" style="margin-bottom:24px;">
+  <h3 style="margin:0;">{{ survey.type }} — {{ survey.title }}</h3>
+  <p style="margin:4px 0 0 0; color:#57606a;">ID: {{ survey.id }} · 날짜: {{ survey.date }}</p>
+</section>
+
+<section class="card" style="margin-bottom:24px;">
+  <h4 style="margin:0 0 12px 0;">요약</h4>
+  <dl class="kv">
+    {% for row in qa %}
+      <dt>{{ row.q }}</dt><dd>{{ row.a }}</dd>
+    {% endfor %}
+  </dl>
+</section>
+
+<section class="card">
+  <h4 style="margin:0 0 12px 0;">질문과 응답</h4>
+
+  {% for item in expanded %}
+    <div style="padding:12px 0; border-top:1px solid #eaecef;">
+      <div style="font-weight:700; margin-bottom:8px;">
+        Q{{ item.order }}. {{ item.question_text }}
+      </div>
+
+      <ul style="list-style:none; padding-left:0; margin:0;">
+        {% for opt in item.options %}
+          <li style="margin:4px 0; display:flex; align-items:center;">
+            <span style="display:inline-block; width:20px; text-align:center;">
+              {% if opt.selected %}✓{% else %}&nbsp;{% endif %}
+            </span>
+            <span {% if opt.selected %}style="font-weight:600;"{% endif %}>
+              {{ opt.text }}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div style="margin-top:6px; color:#57606a;">
+        선택: <strong>{{ item.selected_text }}</strong>
+      </div>
+    </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

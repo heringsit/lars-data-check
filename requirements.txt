@@ -1,0 +1,6 @@
+Flask==3.0.3
+SQLAlchemy==2.0.31
+psycopg2-binary==2.9.9
+pandas==2.2.2
+numpy==1.26.4
+gunicorn==22.0.0
