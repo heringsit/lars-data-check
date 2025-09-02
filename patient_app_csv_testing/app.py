@@ -84,7 +84,7 @@ def get_data_df(table_name: str) -> pd.DataFrame:
 # --------------------------------------------------------------------------------------
 # Utilities
 # --------------------------------------------------------------------------------------
-BELONG_MAP = {1: '서울대학교병원', 2: '분당서울대학교병원', 3: '국립암센터', 6: 'HERINGS Clinic'}
+BELONG_MAP = {1: '서울대학교병원', 2: '분당서울대학교병원', 3: '국립암센터', 6: '헤링스병원'}
 
 def _digits_only(s):
     return "".join(ch for ch in str(s or "") if ch.isdigit())
@@ -382,6 +382,16 @@ def _exercise_details_for_header(header_id: int) -> list[dict]:
             "restTime": r.get("restTime"),
             "videoLink": r.get("videoLink"),
         })
+    ORDER_PRIORITY = {
+        "워밍업/쿨다운": 0,
+        "하지 근력": 1,
+        "근력": 2,
+        "기능적 운동": 3,
+        "지구력": 4,
+        "제자리 걷기": 5,
+        "쿨다운": 6,
+    }
+    details.sort(key=lambda d: ORDER_PRIORITY.get(d["typeName"], 99))
     return details
 
 
@@ -817,8 +827,18 @@ def patient_detail(patient_id):
         user_belong = int(float(pr.get("belongId")))
     except Exception:
         user_belong = None
-    if user_belong is None or user_belong != int(session.get("belong_id")):
-        return render_template("not_found.html", message="대상자를 찾을 수 없습니다."), 404
+        # Access control: belongId must match session unless super admin  :contentReference[oaicite:1]{index=1}
+    if not is_super_admin():  # super admin sees everything
+        belong_id = session.get("belong_id")
+        if belong_id is None:
+            return render_template("not_found.html", message="대상자를 찾을 수 없습니다."), 404
+        try:
+            ok = (user_belong is not None) and (int(user_belong) == int(belong_id))
+        except Exception:
+            ok = False
+        if not ok:
+            return render_template("not_found.html", message="대상자를 찾을 수 없습니다."), 404
+
 
     # Basic info
     birth = _parse_date(pr.get("birth"))
@@ -956,8 +976,9 @@ def patient_detail(patient_id):
             })
 
         # --- GRAPH: ASC ---
-        chart_sub = sub.sort_values(by="__date", ascending=True, kind="mergesort")
-        labels = [_fmt_date(d) for d in chart_sub["__date"]]
+        chart_sub = sub[sub["__date"].notna()].sort_values(by="__date", ascending=True, kind="mergesort")
+
+        labels = [_fmt_date(d) for d in chart_sub["__date"]]  # 'YYYY-MM-DD'
         values = [None if pd.isna(s) else float(s) if s is not None else None
                 for s in chart_sub["score"]]
 
@@ -1062,8 +1083,33 @@ def survey_detail(survey_id):
             user_belong = int(float(pr.iloc[0].get("belongId")))
         except Exception:
             user_belong = None
-        if user_belong is None or user_belong != int(session.get("belong_id")):
-            return render_template("not_found.html", message="설문을 찾을 수 없습니다."), 404
+            # ACCESS CONTROL: belong must match unless super admin  :contentReference[oaicite:4]{index=4}
+    if patient_id is not None:
+        try:
+            users_df = pd.read_sql(text('SELECT id, "belongId" FROM "user" WHERE id = :pid'),
+                                   db_engine, params={"pid": int(patient_id)})
+        except Exception:
+            users_df = pd.DataFrame()
+        pr = users_df.loc[users_df["id"] == patient_id]
+        if pr.empty:
+            return render_template("not_found.html", message="대상자를 찾을 수 없습니다."), 404
+
+        try:
+            user_belong = int(float(pr.iloc[0].get("belongId")))
+        except Exception:
+            user_belong = None
+
+        if not is_super_admin():
+            belong_id = session.get("belong_id")
+            if belong_id is None:
+                return render_template("not_found.html", message="설문을 찾을 수 없습니다."), 404
+            try:
+                ok = (user_belong is not None) and (int(user_belong) == int(belong_id))
+            except Exception:
+                ok = False
+            if not ok:
+                return render_template("not_found.html", message="설문을 찾을 수 없습니다."), 404
+
 
     user_meta = _get_user_meta(patient_id)
     back_url = url_for("patient_detail", patient_id=patient_id) if patient_id is not None else url_for("patient_list")
@@ -1161,8 +1207,52 @@ def exercise_detail(header_id):
         user_belong = int(float(users_df.iloc[0].get("belongId")))
     except Exception:
         user_belong = None
-    if user_belong is None or user_belong != int(session.get("belong_id")):
-        return render_template("not_found.html", message="운동 기록을 찾을 수 없습니다."), 404
+        # access control  :contentReference[oaicite:3]{index=3}
+    if not is_super_admin():
+        belong_id = session.get("belong_id")
+        if belong_id is None:
+            return render_template("not_found.html", message="대상자를 찾을 수 없습니다."), 404
+        try:
+            ok = (user_belong is not None) and (int(user_belong) == int(belong_id))
+        except Exception:
+            ok = False
+        if not ok:
+            return render_template("not_found.html", message="운동 기록을 찾을 수 없습니다."), 404
+
+    # latest non-null LARS score for this user  :contentReference[oaicite:0]{index=0}
+    try:
+        df_lars = pd.read_sql(
+            text('SELECT score, "doneDay", "updatedAt", "createdAt" '
+                 'FROM lars_score WHERE "userId" = :uid'),
+            db_engine, params={"uid": user_id}
+        )
+    except Exception:
+        df_lars = pd.DataFrame()
+
+    latest_lars_score, latest_lars_date = "-", "-"
+
+    if not df_lars.empty:
+        # Keep only rows with a real score
+        df_valid = df_lars[df_lars["score"].notna()].copy()
+
+        if not df_valid.empty:
+            # Build tz-agnostic date using _parse_date (returns datetime.date)  :contentReference[oaicite:1]{index=1}
+            def choose_date(r):
+                for c in ("doneDay", "updatedAt", "createdAt"):
+                    d = _parse_date(r.get(c))
+                    if d:
+                        return d
+                return None
+
+            df_valid["__date"] = df_valid.apply(choose_date, axis=1)
+            df_valid = df_valid[df_valid["__date"].notna()]
+
+            if not df_valid.empty:
+                df_valid = df_valid.sort_values("__date", ascending=False, kind="mergesort")
+                r = df_valid.iloc[0]
+                latest_lars_score = _fmt_score(r.get("score"))     # helper in app.py  :contentReference[oaicite:2]{index=2}
+                latest_lars_date  = _fmt_date(r.get("__date"))     # helper in app.py  :contentReference[oaicite:3]{index=3}
+
 
     # patient summary (lean)
     user_meta = {
@@ -1173,6 +1263,8 @@ def exercise_detail(header_id):
     ratio_disp = "-" if (ratio is None) else f"{ratio:.1f}%"
     details = _exercise_details_for_header(header_id)
     patient_meta = _patient_summary(user_id)
+    patient_meta["lars_score"] = latest_lars_score
+    patient_meta["lars_date"]  = latest_lars_date
     back_url = url_for("patient_detail", patient_id=user_id)
 
     return render_template(

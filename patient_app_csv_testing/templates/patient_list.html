@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% set q = request.args.get('q','') %}
+{% set belong = request.args.get('belong','') %}
+{% set backurl = request.full_path if request.query_string|length else request.path %}
+
 <section class="card" style="margin-bottom:16px;">
   <h2 class="section-title" style="margin:0 0 8px 0;">환자 목록</h2>
 
+  <!-- 검색 영역 -->
   <form method="get" action="{{ url_for('patient_list') }}" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-    <input type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="이름 검색"
+    <input type="text" name="q" value="{{ q }}" placeholder="이름 검색"
            style="flex:1 1 260px; padding:8px; border:1px solid #d0d7de; border-radius:8px;" />
-
 
     <button type="submit" class="btn" style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; font-weight:600;">
       검색
@@ -15,71 +19,62 @@
 
     <a href="{{ url_for('patient_list') }}" class="btn"
        style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">
-      초기화
+      전체
     </a>
   </form>
-</section>
 
-{% set q = request.args.get('q','') %}
-{% set belong = request.args.get('belong','') %}
-{% set backurl = request.full_path if request.query_string|length else request.path %}
+  <hr style="margin:12px 0; border:none; border-top:1px solid #eee;" />
 
-<section class="card">
+  <!-- 환자 리스트 테이블 -->
   <div class="table-wrap">
     <table class="table">
       <thead>
         <tr>
           <th style="width:180px;">이름</th>
           <th>소속병원</th>
-          <th>연구등록번호</th>
+          <th>연구대상자번호</th>
           <th>등록일</th>
-          <th>설문 마지막 응답일</th>
+          <th>마지막 설문 응답일</th>
           <th>나이/성별</th>
           <th>상태</th>
         </tr>
       </thead>
       <tbody>
-        {% for row in rows %}
-          <tr>
-            <td>
-              <a href="{{ url_for('patient_detail', patient_id=row.id, back=backurl) }}">{{ row.name }}</a>
-            </td>
-            <td>{{ row.hospital }}</td>
-            <td>{{ row.research_id }}</td>
-            <td>{{ row.registered_on }}</td>
-            <td>{{ row['설문 마지막 응답일'] or '-' }}</td>
-            <td>{{ row.age }} / {{ row.sex }}</td>
-            <td>
-              <span class="badge {{ 'ok' if row.status=='활성' else 'muted' }}">{{ row.status }}</span>
-            </td>
-          </tr>
+        {% if rows and rows|length %}
+          {% for row in rows %}
+            <tr>
+              <td><a href="{{ url_for('patient_detail', patient_id=row.id, back=backurl) }}">{{ row.name }}</a></td>
+              <td>{{ row.hospital }}</td>
+              <td>{{ row.research_id }}</td>
+              <td>{{ row.registered_on }}</td>
+              <td>{{ row['설문 마지막 응답일'] or '-' }}</td>
+              <td>{{ row.age }} / {{ row.sex }}</td>
+              <td><span class="badge {{ 'ok' if row.status=='활성' else 'muted' }}">{{ row.status }}</span></td>
+            </tr>
+          {% endfor %}
         {% else %}
           <tr>
-            <td colspan="6" class="muted" style="text-align:center;">검색 결과가 없습니다.</td>
+            <td colspan="7" class="muted" style="text-align:center;">검색 결과가 없습니다.</td>
           </tr>
-        {% endfor %}
+        {% endif %}
       </tbody>
     </table>
   </div>
 
-  <!-- pagination -->
+  <!-- 페이지네이션: app.py에서 계산된 URL/플래그 사용 -->
   <div class="pagination" style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-    {% if page > 1 %}
-      <a class="btn" href="{{ url_for('patient_list', q=q, belong=belong, page=page-1) }}"
-         style="padding:6px 10px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none;">이전</a>
+    {% if has_prev %}
+      <a class="btn" href="{{ prev_url }}" style="padding:6px 10px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none;">이전</a>
     {% else %}
-      <span class="btn" aria-disabled="true"
-            style="padding:6px 10px; border:1px solid #eee; color:#aaa; border-radius:8px;">이전</span>
+      <span class="btn" aria-disabled="true" style="padding:6px 10px; border:1px solid #eee; color:#aaa; border-radius:8px;">이전</span>
     {% endif %}
 
     <span style="min-width:120px; text-align:center;">{{ page }} / {{ total_pages }}</span>
 
-    {% if page < total_pages %}
-      <a class="btn" href="{{ url_for('patient_list', q=q, belong=belong, page=page+1) }}"
-         style="padding:6px 10px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none;">다음</a>
+    {% if has_next %}
+      <a class="btn" href="{{ next_url }}" style="padding:6px 10px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none;">다음</a>
     {% else %}
-      <span class="btn" aria-disabled="true"
-            style="padding:6px 10px; border:1px solid #eee; color:#aaa; border-radius:8px;">다음</span>
+      <span class="btn" aria-disabled="true" style="padding:6px 10px; border:1px solid #eee; color:#aaa; border-radius:8px;">다음</span>
     {% endif %}
   </div>
 </section>

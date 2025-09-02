@@ -99,3 +99,23 @@ body{margin:0;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 }
 .grid.two { align-items: stretch !important; }
 .grid.two > .subcard { height: 100%; }
+/* Unified chart height (all charts) */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 300px;              /* consistent height across all graphs */
+}
+
+/* Make canvas fill its wrapper */
+.chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* (Optional) Wider content so cards aren't squished */
+main, .container, .content, .page, .wrap {
+  max-width: 80% !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}

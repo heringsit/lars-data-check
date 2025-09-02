@@ -14,7 +14,8 @@
   <h3 style="margin:0 0 12px 0;">환자 정보</h3>
   <dl class="kv">
     <dt>이름</dt><dd>{{ patient.name or '-' }}</dd>
-    {% if patient.hospital %}<dt>소속병원</dt><dd>{{ patient.hospital }}</dd>{% endif %}
+    <dt>최신 LARS 점수</dt>
+    <dd>{{ patient.lars_score }}{% if patient.lars_date and patient.lars_date != '-' %} ({{ patient.lars_date }}){% endif %}</dd>
     {% if patient.age or patient.sex %}<dt>나이/성별</dt><dd>{{ patient.age or '-' }} / {{ patient.sex or '-' }}</dd>{% endif %}
     {% if patient.registered_on %}<dt>등록일</dt><dd>{{ patient.registered_on }}</dd>{% endif %}
     <dt>기록 날짜</dt><dd>{{ workout_header.date or '-' }}</dd>
@@ -31,10 +32,9 @@
         <th style="width:160px;">운동 분류</th>
         <th>운동명</th>
         <th style="width:120px;">완료 세트</th>
-        <th style="width:120px;">총 세트</th>
-        <th style="width:140px;">1세트 반복수</th>
+        <th style="width:120px;">총 세트수</th>
+        <th style="width:140px;">세트당 동작수</th>
         <th style="width:120px;">휴식(초)</th>
-        <th style="width:120px;">영상</th>
       </tr>
     </thead>
     <tbody>
@@ -47,11 +47,6 @@
           <td>{{ d.setCount }}</td>
           <td>{{ d.countPerSet }}</td>
           <td>{{ d.restTime or '-' }}</td>
-          <td>
-            {% if d.videoLink %}
-              <a href="{{ d.videoLink }}" target="_blank" rel="noopener">보기</a>
-            {% else %}-{% endif %}
-          </td>
         </tr>
         {% endfor %}
       {% else %}
@@ -60,4 +55,7 @@
     </tbody>
   </table>
 </section>
+<footer class="page-actions" style="margin-top:20px; display:flex; justify-content:flex-start;">
+  <a href="{{ back_url }}" class="btn" style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">← 목록으로</a>
+</footer>
 {% endblock %}

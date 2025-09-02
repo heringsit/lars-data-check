@@ -1,76 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  /* === OVERRIDES to give you a wider working area === */
-  /* Many base templates center content with a narrow max-width.
-     These overrides expand that central column so your 3 cards aren't squished. */
-  main, .container, .content, .page, .wrap {
-    max-width: 80% !important;  /* Adjust if you want even wider */
-    width: 100% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-
-  /* Make the main top card span full width nicely */
-  section.card {
-    width: 100%;
-  }
-
-  /* === LAYOUT GRIDS === */
-  /* Three-up metrics grid that grows BIG on wide screens and wraps gracefully */
-  .grid.three {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); /* wider min to avoid squish */
-    gap: 24px;
-    align-items: start;
-  }
-
-  /* Two-up grid for the info blocks */
-  .grid.two {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  /* Subcards inside the big '환자상세정보' card */
-  .subcard {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 14px;
-    background: #fff;
-  }
-
-  /* Charts fill card width; height tuned for readability */
-  .card canvas, .subcard canvas {
-    width: 100% !important;
-    height: 260px !important;
-  }
-
-  /* Tables: allow horizontal scroll on small screens so columns don't crush */
-  .table-wrap {
-    overflow-x: auto;
-  }
-
-  /* Slightly larger section titles for better visual balance in wide layout */
-  .section-title {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
-  }
+  main, .container, .content, .page, .wrap { max-width: 90% !important; width: 100% !important; margin: 0 auto !important; }
+  section.card { width: 100%; }
+  .grid.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; align-items: start; }
+  .grid.two   { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: stretch; }
+  .subcard { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; background: #fff; }
+  .card canvas, .subcard canvas { width: 100% !important; height: 260px !important; }
+  .table-wrap { overflow-x: auto; }
+  .section-title { margin: 0; font-size: 18px; font-weight: 700; }
 </style>
 
 <header class="page-actions" style="margin-top:20px; display:flex; justify-content:flex-start;">
-  <a href="{{ back_url }}"
-     class="btn"
-     style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">
-    ← 목록으로
-  </a>
+  <a href="{{ back_url }}" class="btn" style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">← 목록으로</a>
 </header>
 
-<h2>환자상세정보</h2>
+<h2>환자 상세정보</h2>
 
-<!-- Keep everything inside ONE big card so the '환자상세정보' title visually covers the grids below -->
 <section class="card" style="margin-bottom:24px;">
   <h2 class="section-title">환자 상세정보</h2>
 
@@ -82,11 +28,10 @@
         <dt>이름</dt><dd>{{ patient.name }}</dd>
         <dt>소속병원</dt><dd>{{ patient.hospital }}</dd>
         <dt>연락처</dt><dd>{{ patient.phone }}</dd>
-        <dt>연구등록번호</dt><dd>{{ patient.research_id }}</dd>
+        <dt>연구자등록번호</dt><dd>{{ patient.research_id }}</dd>
         <dt>등록일</dt><dd>{{ patient.registered_on }}</dd>
         <dt>나이/성별</dt><dd>{{ patient.age }} / {{ patient.sex }}</dd>
-        <dt>상태</dt>
-        <dd><span class="badge {{ 'ok' if patient.status=='활성' else 'muted' }}">{{ patient.status }}</span></dd>
+        <dt>상태</dt><dd><span class="badge {{ 'ok' if patient.status=='활성' else 'muted' }}">{{ patient.status }}</span></dd>
       </dl>
     </div>
 
@@ -122,17 +67,15 @@
 
   <hr style="border:none; border-top:1px solid #eee; margin:16px 0;" />
 
-  <!-- LARS / EQ-5D / Exercise responsive row -->
+  <!-- LARS / EQ-5D / Exercise -->
   <div class="grid three">
     <!-- LARS -->
     <section class="subcard">
-      <h3 class="section-title">LARS 점수 추세</h3>
-      <canvas id="chart-lars"></canvas>
+      <h3 class="section-title">LARS 점수 그래프</h3>
+      <div class="chart-wrap"><canvas id="chart-lars"></canvas></div>
       <div class="table-wrap" style="margin-top:12px">
         <table class="table">
-          <thead>
-            <tr><th>설문명</th><th>날짜</th><th>점수</th><th>상태</th></tr>
-          </thead>
+          <thead><tr><th>설문명</th><th>날짜</th><th>점수</th><th>상태</th></tr></thead>
           <tbody>
             {% for r in lars_rows %}
             <tr>
@@ -151,13 +94,11 @@
 
     <!-- EQ-5D -->
     <section class="subcard">
-      <h3 class="section-title">EQ-5D 점수 추세</h3>
-      <canvas id="chart-eq"></canvas>
+      <h3 class="section-title">EQ-5D 점수 그래프</h3>
+      <div class="chart-wrap"><canvas id="chart-eq"></canvas></div>
       <div class="table-wrap" style="margin-top:12px">
         <table class="table">
-          <thead>
-            <tr><th>설문명</th><th>날짜</th><th>점수</th><th>상태</th></tr>
-          </thead>
+          <thead><tr><th>설문명</th><th>날짜</th><th>점수</th><th>상태</th></tr></thead>
           <tbody>
             {% for r in eq_rows %}
             <tr>
@@ -176,38 +117,20 @@
 
     <!-- Exercise -->
     <section class="subcard">
-      <h3 class="section-title" style="margin:0">운동 달성률</h3>
-      <div style="margin:12px 0;">
-        <canvas id="exChart"></canvas>
-      </div>
-      <div class="table-wrap">
+      <h3 class="section-title" style="margin:0">운동 달성률 (%)</h3>
+      <div class="chart-wrap"><canvas id="exChart"></canvas></div>
+      <div class="table-wrap" style="margin-top:12px;">
         <table class="table" style="width:100%;">
-          <thead>
-            <tr>
-              <th style="width:140px;">날짜</th>
-              <th style="width:120px;">달성률</th>
-              <th>상태</th>
-            </tr>
-          </thead>
+          <thead><tr><th style="width:140px;">날짜</th><th style="width:120px;">달성률</th><th>상태</th></tr></thead>
           <tbody>
             {% if ex_rows and ex_rows|length > 0 %}
               {% for r in ex_rows %}
               <tr>
-                <td>
-                  <a href="{{ url_for('exercise_detail', header_id=r.id) }}"
-                     style="text-decoration:none; font-weight:600;">
-                    {{ r.date }}
-                  </a>
-                </td>
+                <td><a href="{{ url_for('exercise_detail', header_id=r.id) }}" style="text-decoration:none; font-weight:600;">{{ r.date }}</a></td>
                 <td>{{ r.ratio_display }}</td>
                 <td>
-                  <span class="badge 
-                   {% if r.status=='완료' %}ok
-                  {% elif r.status=='진행중' %}warn
-                  {% else %}muted{% endif %}">
-                  {{ r.status }}
-                  </span>
-                  </td>
+                  <span class="badge {% if r.status=='완료' %}ok{% elif r.status=='진행중' %}warn{% else %}muted{% endif %}">{{ r.status }}</span>
+                </td>
               </tr>
               {% endfor %}
             {% else %}
@@ -221,8 +144,8 @@
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
 <script>
-  // Use bracket-notation to avoid colliding with dict built-ins like .values()
   const larsLabels = {{ (lars_chart['labels'] if lars_chart else []) | tojson }};
   const larsValues = {{ (lars_chart['values'] if lars_chart else []) | tojson }};
   const eqLabels   = {{ (eq_chart['labels']   if eq_chart   else []) | tojson }};
@@ -230,74 +153,98 @@
   const exLabels   = {{ (ex_chart['labels']   if ex_chart   else []) | tojson }};
   const exValues   = {{ (ex_chart['values']   if ex_chart   else []) | tojson }};
 
-  new Chart(document.getElementById("chart-lars"), {
-    type: "line",
-    data: { labels: larsLabels, datasets: [{ label: "LARS", data: larsValues, tension: 0.3, spanGaps: true }] },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-          x: {
-            ticks: {
-              autoSkip: false,    // show all labels
-              maxRotation: 45,    // tilt labels if crowded
-              minRotation: 0
-            }
-          },
-          y: { beginAtZero: true }
-        },
-      plugins: { legend: { display: true } }
-    }
-  });
+  // Filter helper: keep only entries with numeric values
+  function filterNumeric(labels, values) {
+  const outL = [], outV = [];
+  for (let i = 0; i < Math.min(labels.length, values.length); i++) {
+    const rawValue = values[i];
 
-  new Chart(document.getElementById("chart-eq"), {
-    type: "line",
-    data: { labels: eqLabels, datasets: [{ label: "EQ-5D", data: eqValues, tension: 0.3, spanGaps: true }] },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          ticks: {
-            autoSkip: false,    // show all labels
-            maxRotation: 45,    // tilt labels if crowded
-            minRotation: 0
-          }
-        },
-        y: { beginAtZero: true }
-      },
-      plugins: { legend: { display: true } }
+    // null, undefined, 빈 문자열은 건너뛰기
+    if (rawValue === null || rawValue === undefined || rawValue === '') {
+      continue;
     }
-  });
 
-  const exCtx = document.getElementById('exChart');
-  if (exCtx) {
-    new Chart(exCtx, {
+    const v = Number(rawValue);
+    if (!Number.isNaN(v)) {
+      outL.push(String(labels[i] ?? ''));
+      outV.push(v);
+    }
+  }
+  return { labels: outL, values: outV };
+}
+
+  const xCommon = {
+    type: 'category',
+    ticks: { autoSkip: true, maxTicksLimit: 7, maxRotation: 45, minRotation: 0, display: true },
+    grid: { display: true }
+  };
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'nearest', intersect: false },
+    plugins: { legend: { display: false } }
+  };
+
+  (function() {
+    const { labels, values } = filterNumeric(larsLabels, larsValues);
+    new Chart(document.getElementById('chart-lars'), {
       type: 'line',
-      data: { labels: exLabels, datasets: [{ label: '운동 달성률(%)', data: exValues, tension: 0.3, spanGaps: true }] },
+      data: { labels, datasets: [{ label: 'LARS', data: values, tension: 0.3, spanGaps: false, skipNull: true, pointRadius: 3, pointHoverRadius: 4 }] },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        ...baseOpts,
         scales: {
-          x: {
-            ticks: {
-              autoSkip: false,    // show all labels
-              maxRotation: 45,    // tilt labels if crowded
-              minRotation: 0
-            }
-          },
-          y: { beginAtZero: true }
+          x: xCommon,
+          y: { beginAtZero: true, min: 0, max: 42, ticks: { stepSize: 6 } }
         },
+        plugins: {
+          ...baseOpts.plugins,
+          annotation: {
+            annotations: {
+              minorLARS: {
+                type: 'line', yMin: 21, yMax: 21, borderDash: [6,6], borderWidth: 2, borderColor: 'orange',
+                label: { display: true, content: 'Minor LARS', position: 'end', backgroundColor: 'orange', padding: 4 }
+              },
+              majorLARS: {
+                type: 'line', yMin: 30, yMax: 30, borderDash: [6,6], borderWidth: 2, borderColor: 'red',
+                label: { display: true, content: 'Major LARS', position: 'end', backgroundColor: 'red', padding: 4 }
+              }
+            }
+          }
+        }
       }
     });
-  }
+  })();
+
+  (function() {
+    const { labels, values } = filterNumeric(eqLabels, eqValues);
+    new Chart(document.getElementById('chart-eq'), {
+      type: 'line',
+      data: { labels, datasets: [{ label: 'EQ-5D', data: values, tension: 0.3, spanGaps: false, skipNull: true, pointRadius: 3, pointHoverRadius: 4 }] },
+      options: { ...baseOpts, scales: { x: xCommon, y: { beginAtZero: true } } }
+    });
+  })();
+
+  (function() {
+    // Keep zeros (0%) as valid points
+    const labels = [], values = [];
+    for (let i = 0; i < Math.min(exLabels.length, exValues.length); i++) {
+      const vRaw = exValues[i];
+      const v = Number(vRaw);
+      if (vRaw === 0 || v === 0 || !Number.isNaN(v)) {
+        labels.push(String(exLabels[i] ?? ''));
+        values.push(Number(vRaw));
+      }
+    }
+    new Chart(document.getElementById('exChart'), {
+      type: 'line',
+      data: { labels, datasets: [{ label: '운동 달성률(%)', data: values, tension: 0.3, spanGaps: true, pointRadius: 3, pointHoverRadius: 4 }] },
+      options: { ...baseOpts, scales: { x: xCommon, y: { beginAtZero: true, min: 0, max: 100, ticks: { stepSize: 20 } } } }
+    });
+  })();
 </script>
 
 <footer class="page-actions" style="margin-top:20px; display:flex; justify-content:flex-start;">
-  <a href="{{ back_url }}"
-     class="btn"
-     style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">
-    ← 목록으로
-  </a>
+  <a href="{{ back_url }}" class="btn" style="padding:8px 12px; border:1px solid #d0d7de; border-radius:8px; text-decoration:none; font-weight:600;">← 목록으로</a>
 </footer>
 {% endblock %}

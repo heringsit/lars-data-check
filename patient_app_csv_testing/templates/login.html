@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="card" style="max-width:420px; margin:48px auto; padding:24px;">
-  <h2 style="margin-top:0;">Admin Login</h2>
+  <h2 style="margin-top:0;">관리자 로그인</h2>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -14,13 +14,13 @@
   {% endwith %}
 
   <form method="post" action="{{ url_for('login') }}">
-    <label style="display:block; margin:12px 0 4px;">Email</label>
+    <label style="display:block; margin:12px 0 4px;">이메일</label>
     <input type="email" name="email" required style="width:100%; padding:10px;">
 
-    <label style="display:block; margin:12px 0 4px;">Password (last 4 of phone)</label>
+    <label style="display:block; margin:12px 0 4px;">비밀번호</label>
     <input type="password" name="password" required minlength="4" maxlength="4" style="width:100%; padding:10px;">
 
-    <button class="btn" style="margin-top:16px; padding:10px 14px;">Log in</button>
+    <button class="btn" style="margin-top:16px; padding:10px 14px;">로그인</button>
   </form>
 </section>
 {% endblock %}

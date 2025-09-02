@@ -1,0 +1,74 @@
+{
+  "family": "patient-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::757824880057:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::757824880057:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "web",
+      "image": "757824880057.dkr.ecr.ap-northeast-2.amazonaws.com/patient-app:latest",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "DB_HOST",
+          "value": "your-aurora-endpoint.rds.amazonaws.com"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "5432"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "postgres"
+        },
+        {
+          "name": "DB_USER",
+          "value": "appuser"
+        },
+        {
+          "name": "DB_SSLMODE",
+          "value": "require"
+        },
+        {
+          "name": "SECRET_KEY",
+          "value": "replace-with-random"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_PWD",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:757824880057:parameter/patient-app/DB_PWD"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/patient-app",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8080/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ]
+}
