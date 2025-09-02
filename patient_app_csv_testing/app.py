@@ -758,7 +758,16 @@ def patient_list():
     rows = normalize_users(users)
     for row in rows:
         row['설문 마지막 응답일'] = last_survey_dates.get(row['id'])
+        
+        # 연구자등록번호 순으로 정렬 (내림차순: 최근 번호 위)
+    def _regnum_key(r):
+        # 숫자만 추출해서 정수 변환, 실패하면 0
+        try:
+            return int("".join(ch for ch in str(r.get("research_id") or "") if ch.isdigit()))
+        except Exception:
+            return 0
 
+    rows.sort(key=_regnum_key, reverse=True)
     # pagination
     per_page = int(request.args.get("per_page", 10))
     total = len(rows)
